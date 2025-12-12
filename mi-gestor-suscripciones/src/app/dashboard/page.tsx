@@ -38,7 +38,7 @@ export default function Dashboard() {
   const [isOpen, setIsOpen] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  // Estado para saber si estamos editando (si tiene valor es que editamos, si es null creamos)
+  // Estado para saber si estamos editando
   const [editingId, setEditingId] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
@@ -68,14 +68,14 @@ export default function Dashboard() {
 
   // --- ABRIR MODAL PARA CREAR ---
   const openCreateModal = () => {
-    setEditingId(null); // Limpiamos ID
-    setFormData({ name: "", price: "", date: "", category: "Entretenimiento" }); // Limpiamos form
+    setEditingId(null);
+    setFormData({ name: "", price: "", date: "", category: "Entretenimiento" });
     setIsOpen(true);
   }
 
   // --- ABRIR MODAL PARA EDITAR ---
   const openEditModal = (sub: Subscription) => {
-    setEditingId(sub.id); // Guardamos qué ID editamos
+    setEditingId(sub.id);
     setFormData({
       name: sub.name,
       price: sub.price.toString(),
@@ -108,11 +108,11 @@ export default function Dashboard() {
       let error;
 
       if (editingId) {
-        // MODO EDICIÓN: ACTUALIZAMOS
+        // MODO EDICIÓN
         const response = await supabase.from('subscriptions').update(payload).eq('id', editingId);
         error = response.error;
       } else {
-        // MODO CREACIÓN: INSERTAMOS
+        // MODO CREACIÓN
         const response = await supabase.from('subscriptions').insert([payload]);
         error = response.error;
       }
@@ -132,7 +132,6 @@ export default function Dashboard() {
 
   // --- BORRAR ---
   async function handleDelete(id: string) {
-    // Un pequeño confirm nativo (se puede hacer más bonito con otro Dialog, pero esto es rápido)
     if (!confirm("¿Seguro que quieres borrar esta suscripción?")) return;
 
     const { error } = await supabase.from('subscriptions').delete().eq('id', id);
@@ -141,7 +140,6 @@ export default function Dashboard() {
       toast.error("Error al borrar");
     } else {
       toast.success("Eliminada correctamente");
-      // Optimizamos: borramos del estado local sin recargar todo
       setSubscriptions(prev => prev.filter(sub => sub.id !== id));
     }
   }
@@ -155,21 +153,24 @@ export default function Dashboard() {
       <div className="relative z-10">
         <Navbar />
 
-        <main className="container mx-auto px-4 py-12 max-w-5xl">
+        {/* Ajustamos padding vertical: py-8 en móvil, py-12 en PC */}
+        <main className="container mx-auto px-4 py-8 md:py-12 max-w-5xl">
 
-          <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          {/* --- HEADER Y RESUMEN --- */}
+          <div className="mb-8 md:mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6 text-center md:text-left">
             <div className="space-y-2">
-              <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+              <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
                 Tus Gastos
               </h1>
-              <p className="text-lg text-slate-500">
+              <p className="text-base sm:text-lg text-slate-500">
                 Gestiona y controla tus pagos recurrentes.
               </p>
             </div>
 
-            <div className="flex flex-col items-end">
+            <div className="flex flex-col items-center md:items-end">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Mensual</span>
-              <div className="text-6xl font-black text-slate-900 tracking-tighter">
+              {/* Ajustamos tamaño del número para que no rompa en móvil */}
+              <div className="text-5xl sm:text-6xl font-black text-slate-900 tracking-tighter mt-1">
                 {totalMonthly.toFixed(2)}€
               </div>
               <div className="text-sm font-medium text-emerald-600 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full mt-2">
@@ -178,18 +179,23 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between mb-8 pb-4">
-            <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+          {/* --- BARRA DE ACCIONES --- */}
+          {/* En móvil ponemos flex-col para que el botón ocupe todo el ancho */}
+          <div className="flex flex-col sm:flex-row items-center justify-between mb-8 pb-4 gap-4">
+            <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2 self-start sm:self-auto">
               Mis Suscripciones
             </h2>
 
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
               <DialogTrigger asChild>
-                <Button onClick={openCreateModal} className="bg-slate-900 hover:bg-slate-800 text-white shadow-lg">
-                  <Plus className="mr-2 h-4 w-4" /> Nueva Suscripción
+                {/* Botón Full Width en móvil (w-full) y más alto (h-12) */}
+                <Button onClick={openCreateModal} className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white shadow-lg h-12 sm:h-10 text-base sm:text-sm">
+                  <Plus className="mr-2 h-5 w-5 sm:h-4 sm:w-4" /> Nueva Suscripción
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px] bg-white">
+
+              {/* Modal responsive: 95% de ancho en móvil, máximo 425px en PC */}
+              <DialogContent className="w-[95%] sm:max-w-[425px] bg-white rounded-xl">
                 <DialogHeader>
                   <DialogTitle>{editingId ? "Editar suscripción" : "Añadir servicio"}</DialogTitle>
                 </DialogHeader>
@@ -200,6 +206,7 @@ export default function Dashboard() {
                     <Input
                       id="name"
                       placeholder="Ej: Netflix"
+                      className="h-11 sm:h-10" // Inputs más altos para el dedo
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     />
@@ -211,15 +218,17 @@ export default function Dashboard() {
                         id="price"
                         type="number"
                         placeholder="0.00"
+                        className="h-11 sm:h-10"
                         value={formData.price}
                         onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="date">Día de cobro</Label>
+                      <Label htmlFor="date">Día cobro</Label>
                       <Input
                         id="date"
                         type="date"
+                        className="h-11 sm:h-10"
                         value={formData.date}
                         onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                       />
@@ -229,9 +238,9 @@ export default function Dashboard() {
                     <Label>Categoría</Label>
                     <Select
                       onValueChange={(val) => setFormData({ ...formData, category: val })}
-                      value={formData.category} // IMPORTANTE: Usar value aquí para que se pre-seleccione al editar
+                      value={formData.category}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="h-11 sm:h-10">
                         <SelectValue placeholder="Selecciona" />
                       </SelectTrigger>
                       <SelectContent>
@@ -246,7 +255,7 @@ export default function Dashboard() {
                 </div>
 
                 <div className="flex justify-end">
-                  <Button onClick={handleSave} disabled={saving} className="bg-slate-900 text-white">
+                  <Button onClick={handleSave} disabled={saving} className="bg-slate-900 text-white w-full sm:w-auto h-12 sm:h-10">
                     {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     {editingId ? "Actualizar" : "Guardar"}
                   </Button>
@@ -258,26 +267,26 @@ export default function Dashboard() {
           {loading ? (
             <div className="text-center py-20 text-slate-400">Cargando...</div>
           ) : (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
               {subscriptions.map((sub) => (
                 <SubscriptionCard
                   key={sub.id}
-                  id={sub.id} // Pasamos el ID
+                  id={sub.id}
                   name={sub.name}
                   price={sub.price}
                   date={new Date(sub.start_date).toLocaleDateString()}
                   category={sub.category}
-                  onEdit={() => openEditModal(sub)} // Pasamos la función de editar
-                  onDelete={() => handleDelete(sub.id)} // Pasamos la función de borrar
+                  onEdit={() => openEditModal(sub)}
+                  onDelete={() => handleDelete(sub.id)}
                 />
               ))}
 
               <div
                 onClick={openCreateModal}
-                className="flex flex-col items-center justify-center border border-dashed border-slate-300 rounded-xl p-6 h-full min-h-[180px] text-slate-400 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/30 transition-all duration-200 group cursor-pointer bg-white/50"
+                className="flex flex-col items-center justify-center border border-dashed border-slate-300 rounded-xl p-6 h-full min-h-[140px] sm:min-h-[180px] text-slate-400 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/30 transition-all duration-200 group cursor-pointer bg-white/50"
               >
-                <div className="h-12 w-12 rounded-full bg-slate-100 group-hover:bg-blue-100 flex items-center justify-center mb-3 transition-colors">
-                  <Plus className="h-6 w-6 text-slate-400 group-hover:text-blue-600" />
+                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-slate-100 group-hover:bg-blue-100 flex items-center justify-center mb-3 transition-colors">
+                  <Plus className="h-5 w-5 sm:h-6 sm:w-6 text-slate-400 group-hover:text-blue-600" />
                 </div>
                 <span className="font-medium text-sm">Añadir servicio</span>
               </div>
