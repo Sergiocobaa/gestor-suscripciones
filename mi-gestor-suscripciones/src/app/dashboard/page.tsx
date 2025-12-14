@@ -6,9 +6,10 @@ import { SubscriptionCard } from "@/components/subscription-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Plus, Loader2, Save } from "lucide-react"
+import { Plus, Loader2, Save, Wallet } from "lucide-react" // Asegúrate de tener Wallet
 import { supabase } from "@/lib/supabase"
 import { toast } from "sonner"
+import { CategoryChart } from "@/components/category-chart"
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+// 1. IMPORTAR EL SWITCH Y EL LABEL
+import { Switch } from "@/components/ui/switch"
 
 interface Subscription {
   id: string
@@ -37,9 +40,10 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [isOpen, setIsOpen] = useState(false)
   const [saving, setSaving] = useState(false)
-
-  // Estado para saber si estamos editando
   const [editingId, setEditingId] = useState<string | null>(null)
+
+  // 2. NUEVO ESTADO PARA EL MODO ANUAL
+  const [isYearly, setIsYearly] = useState(false)
 
   const [formData, setFormData] = useState({
     name: "",
@@ -48,7 +52,6 @@ export default function Dashboard() {
     category: "Entretenimiento"
   })
 
-  // --- CARGAR DATOS ---
   useEffect(() => {
     fetchSubscriptions()
   }, [])
@@ -66,14 +69,12 @@ export default function Dashboard() {
     }
   }
 
-  // --- ABRIR MODAL PARA CREAR ---
   const openCreateModal = () => {
     setEditingId(null);
     setFormData({ name: "", price: "", date: "", category: "Entretenimiento" });
     setIsOpen(true);
   }
 
-  // --- ABRIR MODAL PARA EDITAR ---
   const openEditModal = (sub: Subscription) => {
     setEditingId(sub.id);
     setFormData({
@@ -85,7 +86,6 @@ export default function Dashboard() {
     setIsOpen(true);
   }
 
-  // --- GUARDAR (CREAR O EDITAR) ---
   async function handleSave() {
     if (!formData.name || !formData.price || !formData.date) {
       toast.warning("Rellena todos los campos")
@@ -101,19 +101,17 @@ export default function Dashboard() {
         name: formData.name,
         price: parseFloat(formData.price),
         start_date: formData.date,
-        category: formData.category,
         next_payment_date: formData.date,
+        category: formData.category,
         user_id: user.id
       }
 
       let error;
 
       if (editingId) {
-        // MODO EDICIÓN
         const response = await supabase.from('subscriptions').update(payload).eq('id', editingId);
         error = response.error;
       } else {
-        // MODO CREACIÓN
         const response = await supabase.from('subscriptions').insert([payload]);
         error = response.error;
       }
@@ -131,12 +129,9 @@ export default function Dashboard() {
     }
   }
 
-  // --- BORRAR ---
   async function handleDelete(id: string) {
     if (!confirm("¿Seguro que quieres borrar esta suscripción?")) return;
-
     const { error } = await supabase.from('subscriptions').delete().eq('id', id);
-
     if (error) {
       toast.error("Error al borrar");
     } else {
@@ -145,7 +140,10 @@ export default function Dashboard() {
     }
   }
 
+  // CÁLCULO INTELIGENTE
   const totalMonthly = subscriptions.reduce((acc, sub) => acc + sub.price, 0)
+  // Si está en modo anual, multiplicamos por 12
+  const displayTotal = isYearly ? totalMonthly * 12 : totalMonthly
 
   return (
     <div className="min-h-screen w-full bg-grid-pattern relative selection:bg-blue-100">
@@ -154,34 +152,64 @@ export default function Dashboard() {
       <div className="relative z-10">
         <Navbar />
 
-        {/* Ajustamos padding vertical: py-8 en móvil, py-12 en PC */}
         <main className="container mx-auto px-4 py-8 md:py-12 max-w-5xl">
 
-          {/* --- HEADER Y RESUMEN --- */}
-          <div className="mb-8 md:mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6 text-center md:text-left">
-            <div className="space-y-2">
-              <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
-                Tus Gastos
-              </h1>
-              <p className="text-base sm:text-lg text-slate-500">
-                Gestiona y controla tus pagos recurrentes.
-              </p>
-            </div>
-
-            <div className="flex flex-col items-center md:items-end">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Mensual</span>
-              {/* Ajustamos tamaño del número para que no rompa en móvil */}
-              <div className="text-5xl sm:text-6xl font-black text-slate-900 tracking-tighter mt-1">
-                {totalMonthly.toFixed(2)}€
-              </div>
-              <div className="text-sm font-medium text-emerald-600 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full mt-2">
-                {subscriptions.length} activas
-              </div>
+          {/* CABECERA CON INTERRUPTOR */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+            {/* 3. INTERRUPTOR (SWITCH) */}
+            <div className="flex items-center space-x-2 bg-white/50 backdrop-blur-sm p-2 rounded-lg border border-slate-200">
+              <Switch
+                id="mode-toggle"
+                checked={isYearly}
+                onCheckedChange={setIsYearly}
+              />
+              <Label htmlFor="mode-toggle" className="cursor-pointer font-medium text-slate-700">
+                {isYearly ? "Pago Anual (x12)" : "Pago Mensual"}
+              </Label>
             </div>
           </div>
 
-          {/* --- BARRA DE ACCIONES --- */}
-          {/* En móvil ponemos flex-col para que el botón ocupe todo el ancho */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 items-start">
+
+            <div className="md:col-span-2 space-y-8">
+              <div className="space-y-2 text-center md:text-left">
+                <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
+                  Tus Gastos
+                </h1>
+                <p className="text-base sm:text-lg text-slate-500">
+                  Gestiona y controla tus pagos recurrentes.
+                </p>
+              </div>
+
+              <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-xl shadow-slate-900/20 transform transition-all hover:scale-[1.01]">
+                <div className="flex justify-between items-start">
+                  <div>
+                    {/* CAMBIAMOS EL TEXTO SEGÚN EL MODO */}
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                      {isYearly ? "Total Anual Estimado" : "Total Mensual"}
+                    </span>
+                    <div className="text-4xl sm:text-6xl font-black tracking-tighter mt-2 transition-all duration-300">
+                      {displayTotal.toFixed(2)}€
+                    </div>
+                  </div>
+                  <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm">
+                    <Wallet className="h-6 w-6 text-emerald-400" />
+                  </div>
+                </div>
+                <div className="mt-4 flex gap-2">
+                  <div className="text-sm font-medium text-emerald-300 bg-emerald-500/20 px-3 py-1 rounded-full">
+                    {subscriptions.length} suscripciones activas
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Pasamos los datos modificados al gráfico si quisiéramos, pero el gráfico muestra porcentajes así que da igual */}
+            <CategoryChart subscriptions={subscriptions} />
+
+          </div>
+
+          {/* ... BARRA DE ACCIONES ... */}
           <div className="flex flex-col sm:flex-row items-center justify-between mb-8 pb-4 gap-4">
             <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2 self-start sm:self-auto">
               Mis Suscripciones
@@ -189,32 +217,29 @@ export default function Dashboard() {
 
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
               <DialogTrigger asChild>
-                {/* Botón Full Width en móvil (w-full) y más alto (h-12) */}
                 <Button onClick={openCreateModal} className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white shadow-lg h-12 sm:h-10 text-base sm:text-sm">
                   <Plus className="mr-2 h-5 w-5 sm:h-4 sm:w-4" /> Nueva Suscripción
                 </Button>
               </DialogTrigger>
-
-              {/* Modal responsive: 95% de ancho en móvil, máximo 425px en PC */}
+              {/* ... CONTENIDO DEL MODAL (IGUAL QUE ANTES) ... */}
               <DialogContent className="w-[95%] sm:max-w-[425px] bg-white rounded-xl">
                 <DialogHeader>
                   <DialogTitle>{editingId ? "Editar suscripción" : "Añadir servicio"}</DialogTitle>
                 </DialogHeader>
-
                 <div className="grid gap-4 py-4">
                   <div className="grid gap-2">
                     <Label htmlFor="name">Nombre</Label>
                     <Input
                       id="name"
                       placeholder="Ej: Netflix"
-                      className="h-11 sm:h-10" // Inputs más altos para el dedo
+                      className="h-11 sm:h-10"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="price">Precio (€)</Label>
+                      <Label htmlFor="price">Precio Mensual (€)</Label>
                       <Input
                         id="price"
                         type="number"
@@ -254,7 +279,6 @@ export default function Dashboard() {
                     </Select>
                   </div>
                 </div>
-
                 <div className="flex justify-end">
                   <Button onClick={handleSave} disabled={saving} className="bg-slate-900 text-white w-full sm:w-auto h-12 sm:h-10">
                     {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
@@ -274,7 +298,9 @@ export default function Dashboard() {
                   key={sub.id}
                   id={sub.id}
                   name={sub.name}
-                  price={sub.price}
+                  period={isYearly ? "año" : "mes"}
+                  // 4. AQUÍ LA MAGIA: Multiplicamos el precio en la tarjeta si es modo anual
+                  price={isYearly ? (sub.price * 12).toFixed(2) : sub.price.toFixed(2)}
                   date={new Date(sub.start_date).toLocaleDateString()}
                   category={sub.category}
                   onEdit={() => openEditModal(sub)}

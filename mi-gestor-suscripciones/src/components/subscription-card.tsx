@@ -15,11 +15,12 @@ interface SubscriptionCardProps {
     price: string | number;
     date: string;
     category: string;
+    period?: "mes" | "año";
     onEdit: () => void;   // Función que pasaremos desde el dashboard
     onDelete: () => void; // Función que pasaremos desde el dashboard
 }
 
-export function SubscriptionCard({ id, name, price, date, category, onEdit, onDelete }: SubscriptionCardProps) {
+export function SubscriptionCard({ id, name, price, date, category, period = "mes", onEdit, onDelete }: SubscriptionCardProps) {
 
     const getBadgeStyle = (cat: string) => {
         switch (cat?.toLowerCase()) {
@@ -27,6 +28,7 @@ export function SubscriptionCard({ id, name, price, date, category, onEdit, onDe
             case 'ia': return "bg-emerald-50 text-emerald-700 border-emerald-200";
             case 'música': return "bg-pink-50 text-pink-700 border-pink-200";
             default: return "bg-slate-100 text-slate-700 border-slate-200";
+
         }
     }
 
@@ -68,7 +70,7 @@ export function SubscriptionCard({ id, name, price, date, category, onEdit, onDe
                             {price}
                             <span className="text-xl align-top text-slate-500 ml-1">€</span>
                         </span>
-                        <span className="text-sm font-medium text-slate-500 ml-2">/mes</span>
+                        <span className="text-sm font-medium text-slate-500 ml-2">/{period}</span>
                     </div>
                 </div>
 
