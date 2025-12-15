@@ -3,40 +3,59 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { MonthSelector } from "@/components/month-selector";
-import { startOfMonth, endOfMonth, format } from "date-fns";
-import { es } from "date-fns/locale";
 import { toast } from "sonner";
 import { 
-  Wallet, 
-  TrendingDown, 
-  TrendingUp, 
-  PiggyBank, 
-  Plus, 
-  Trash2, 
-  ShoppingBag,
-  MoreHorizontal,
-  ArrowUpRight
+  Wallet, TrendingDown, PiggyBank, Plus, Trash2, ShoppingBag, ArrowUpRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+
+// --- FUNCIONES AUXILIARES (Sin date-fns) ---
+// Obtener primer día del mes (YYYY-MM-DD)
+const getStartOfMonth = (date: Date) => {
+  const d = new Date(date.getFullYear(), date.getMonth(), 1);
+  return d.toISOString();
+};
+
+// Obtener último día del mes
+const getEndOfMonth = (date: Date) => {
+  const d = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  return d.toISOString();
+};
+
+// Formatear como YYYY-MM-01 para la base de datos
+const formatDateForDB = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}-01`;
+};
+
+// Formatear fecha bonita (Ej: 15 Oct)
+const formatDateNice = (dateStr: string) => {
+  const date = new Date(dateStr);
+  return new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short' }).format(date);
+};
+
+// Obtener nombre del mes
+const getMonthName = (date: Date) => {
+  return new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(date);
+};
+// ---------------------------------------------
 
 export default function DashboardPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [loading, setLoading] = useState(true);
   
-  // Datos
   const [expenses, setExpenses] = useState<any[]>([]);
   const [income, setIncome] = useState(0);
   const [savingsGoal, setSavingsGoal] = useState(0);
 
-  // --- 1. LÓGICA DE CARGA ---
   async function loadData() {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // A) Cargar Perfil (Ingresos y Metas)
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
@@ -48,9 +67,9 @@ export default function DashboardPage() {
         setSavingsGoal(profile.savings_goal || 0);
       }
 
-      // B) Cargar Gastos del Mes Seleccionado
-      const start = startOfMonth(currentDate).toISOString();
-      const end = endOfMonth(currentDate).toISOString();
+      // Usamos las funciones nativas en vez de date-fns
+      const start = getStartOfMonth(currentDate);
+      const end = getEndOfMonth(currentDate);
 
       const { data: existingExpenses, error } = await supabase
         .from('monthly_expenses')
@@ -58,14 +77,11 @@ export default function DashboardPage() {
         .eq('user_id', user.id)
         .gte('date', start)
         .lte('date', end)
-        .order('date', { ascending: true }); // Ordenar por fecha
+        .order('date', { ascending: true });
 
       if (error) throw error;
 
-      // C) MAGIA: Si el mes está vacío, copiamos las suscripciones
       if (existingExpenses?.length === 0) {
-        console.log("Mes vacío. Generando...");
-        
         const { data: subscriptions } = await supabase
           .from('subscriptions')
           .select('*')
@@ -77,7 +93,7 @@ export default function DashboardPage() {
             title: sub.name,
             amount: sub.price,
             category: sub.category,
-            date: format(currentDate, 'yyyy-MM-01'), // Día 1 del mes
+            date: formatDateForDB(currentDate), // Usamos nuestra función
             is_recurring: true
           }));
 
@@ -88,7 +104,7 @@ export default function DashboardPage() {
           
           if (inserted) {
             setExpenses(inserted);
-            toast.success(`Gastos de ${format(currentDate, 'MMMM', { locale: es })} generados.`);
+            toast.success(`Gastos de ${getMonthName(currentDate)} generados.`);
           }
         } else {
             setExpenses([]); 
@@ -109,21 +125,13 @@ export default function DashboardPage() {
     loadData();
   }, [currentDate]);
 
-
-  // --- 2. CÁLCULOS (Black Card) ---
   const totalExpenses = expenses.reduce((acc, curr) => acc + Number(curr.amount), 0);
   const freeMoney = income - savingsGoal - totalExpenses;
   const percentageUsed = income > 0 ? ((totalExpenses + savingsGoal) / income) * 100 : 0;
-  // Limitamos la barra entre 0 y 100
   const progressWidth = Math.min(Math.max(percentageUsed, 0), 100);
-  
-  // Color de la barra según estado
   const progressColor = freeMoney < 0 ? 'bg-red-500' : (freeMoney < 200 ? 'bg-yellow-400' : 'bg-emerald-400');
 
-
-  // --- 3. ACCIONES ---
   async function addVariableExpense() {
-    // Para el MVP usamos prompt, luego haremos un Modal bonito
     const title = prompt("¿En qué has gastado?");
     if (!title) return;
     const amountStr = prompt("¿Cuánto ha sido?");
@@ -136,13 +144,29 @@ export default function DashboardPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Obtener fecha YYYY-MM-DD local
+      const today = new Date();
+      // Ajustamos al mes seleccionado si no es el actual, o usamos hoy si coincide
+      const expenseDate = new Date(currentDate);
+      if (today.getMonth() === currentDate.getMonth() && today.getFullYear() === currentDate.getFullYear()) {
+          expenseDate.setDate(today.getDate());
+      } else {
+          expenseDate.setDate(1); // Si es otro mes, ponemos día 1 por defecto
+      }
+      
+      // Formato manual YYYY-MM-DD
+      const year = expenseDate.getFullYear();
+      const month = String(expenseDate.getMonth() + 1).padStart(2, '0');
+      const day = String(expenseDate.getDate()).padStart(2, '0');
+      const dateString = `${year}-${month}-${day}`;
+
       const { data, error } = await supabase
         .from('monthly_expenses')
         .insert({
           user_id: user.id,
           title,
           amount,
-          date: format(currentDate, 'yyyy-MM-dd'), // Fecha de hoy en el mes seleccionado
+          date: dateString,
           category: 'variable',
           is_recurring: false
         })
@@ -170,8 +194,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-24">
-      
-      {/* HEADER */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
         <div className="max-w-md mx-auto px-4 h-16 flex items-center justify-between">
             <Link href="/" className="font-bold text-xl tracking-tight text-slate-900">
@@ -181,8 +203,7 @@ export default function DashboardPage() {
                  <Button variant="ghost" size="sm" onClick={() => {
                     const newIncome = prompt("Configura tu sueldo mensual:", income.toString());
                     if(newIncome) {
-                        // Aquí deberíamos actualizar Supabase, por simplicidad en MVP:
-                        alert("Para guardar esto permanentemente necesitamos conectar el update a Supabase. De momento es visual.");
+                        alert("Para guardar esto permanentemente necesitamos conectar el update a Supabase.");
                         setIncome(parseFloat(newIncome));
                     }
                  }}>
@@ -193,14 +214,10 @@ export default function DashboardPage() {
       </div>
 
       <div className="max-w-md mx-auto px-4 pt-6 space-y-6">
-        
-        {/* SELECTOR DE MES */}
         <MonthSelector currentDate={currentDate} onMonthChange={setCurrentDate} />
 
-        {/* --- TARJETA NEGRA (LIBRE PARA GASTAR) --- */}
         <div className="relative overflow-hidden rounded-2xl bg-slate-900 p-6 text-white shadow-xl shadow-slate-900/20 group transition-all hover:scale-[1.01]">
             <div className="absolute top-0 right-0 -mr-8 -mt-8 h-32 w-32 rounded-full bg-gradient-to-br from-emerald-500 to-blue-600 opacity-20 blur-2xl group-hover:opacity-30 transition-opacity"></div>
-            
             <div className="relative z-10">
                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2 opacity-80">
@@ -209,31 +226,22 @@ export default function DashboardPage() {
                     </div>
                     {freeMoney < 0 && <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">¡CUIDADO!</span>}
                 </div>
-
                 <div className="mt-2 flex items-baseline gap-1">
-                    <span className="text-4xl font-black tracking-tighter">
-                        {freeMoney.toFixed(2)}
-                    </span>
+                    <span className="text-4xl font-black tracking-tighter">{freeMoney.toFixed(2)}</span>
                     <span className="text-lg font-medium opacity-60">€</span>
                 </div>
-
-                {/* BARRA DE PROGRESO */}
                 <div className="mt-6">
                     <div className="flex justify-between text-[10px] text-slate-400 mb-1">
                         <span>Gastado: {totalExpenses.toFixed(0)}€</span>
                         <span>Sueldo: {income}€</span>
                     </div>
                     <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
-                        <div 
-                            className={`h-full rounded-full transition-all duration-1000 ease-out ${progressColor}`} 
-                            style={{ width: `${Math.min((totalExpenses/income)*100, 100)}%` }}
-                        ></div>
+                        <div className={`h-full rounded-full transition-all duration-1000 ease-out ${progressColor}`} style={{ width: `${progressWidth}%` }}></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        {/* --- GRID DE RESUMEN --- */}
         <div className="grid grid-cols-2 gap-3">
             <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
                 <div className="flex items-center gap-2 mb-2 text-slate-500">
@@ -251,7 +259,6 @@ export default function DashboardPage() {
             </div>
         </div>
 
-        {/* --- LISTA DE GASTOS --- */}
         <div>
             <div className="flex items-center justify-between mb-4">
                 <h3 className="font-bold text-slate-800 text-lg">Movimientos</h3>
@@ -275,7 +282,7 @@ export default function DashboardPage() {
                                 <div>
                                     <p className="font-bold text-slate-900">{expense.title}</p>
                                     <p className="text-xs text-slate-500 capitalize">
-                                        {expense.category === 'other' ? 'Varios' : expense.category} • {format(new Date(expense.date), "d MMM", {locale: es})}
+                                        {expense.category === 'other' ? 'Varios' : expense.category} • {formatDateNice(expense.date)}
                                     </p>
                                 </div>
                             </div>
@@ -302,7 +309,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* FAB (Floating Action Button) para añadir gasto rápido */}
       <div className="fixed bottom-6 right-6 z-50">
           <Button 
             onClick={addVariableExpense}

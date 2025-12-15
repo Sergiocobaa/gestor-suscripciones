@@ -1,8 +1,6 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
-import { format, addMonths, subMonths } from "date-fns";
-import { es } from "date-fns/locale"; // Para que salga en español
 
 interface MonthSelectorProps {
   currentDate: Date;
@@ -11,30 +9,44 @@ interface MonthSelectorProps {
 
 export function MonthSelector({ currentDate, onMonthChange }: MonthSelectorProps) {
   
-  const handlePrev = () => onMonthChange(subMonths(currentDate, 1));
-  const handleNext = () => onMonthChange(addMonths(currentDate, 1));
+  // Función nativa para restar 1 mes
+  const handlePrev = () => {
+    const newDate = new Date(currentDate);
+    newDate.setMonth(newDate.getMonth() - 1);
+    onMonthChange(newDate);
+  };
 
-  // Formato: "Octubre 2025" (Primera letra mayúscula)
-  const monthLabel = format(currentDate, "MMMM yyyy", { locale: es });
+  // Función nativa para sumar 1 mes
+  const handleNext = () => {
+    const newDate = new Date(currentDate);
+    newDate.setMonth(newDate.getMonth() + 1);
+    onMonthChange(newDate);
+  };
+
+  // Formato nativo en Español (Ej: "Octubre 2025")
+  const formatter = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' });
+  const monthLabel = formatter.format(currentDate);
+  
+  // Poner primera letra mayúscula
   const capitalizedLabel = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
 
   return (
-    <div className="flex items-center justify-between bg-white border border-slate-200 rounded-xl p-1 shadow-sm w-full max-w-xs mx-auto mb-6">
+    <div className="flex items-center justify-between bg-white border border-slate-200 rounded-full px-4 py-2 shadow-sm w-full max-w-[280px] mx-auto select-none mb-6">
       <button 
         onClick={handlePrev}
-        className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors"
+        className="p-1 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"
       >
         <ChevronLeft className="h-5 w-5" />
       </button>
 
-      <div className="flex items-center gap-2 font-bold text-slate-800 text-sm sm:text-base">
-        <Calendar className="h-4 w-4 text-slate-400" />
+      <div className="flex items-center gap-2 font-bold text-slate-800 text-sm">
+        <Calendar className="h-4 w-4 text-emerald-500" />
         {capitalizedLabel}
       </div>
 
       <button 
         onClick={handleNext}
-        className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors"
+        className="p-1 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"
       >
         <ChevronRight className="h-5 w-5" />
       </button>
