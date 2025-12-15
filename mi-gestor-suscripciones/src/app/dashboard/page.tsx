@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { MonthSelector } from "@/components/month-selector"; // Asegúrate de tener el componente que te pasé antes
+import { MonthSelector } from "@/components/month-selector";
 import { 
   Plus, Wallet, PiggyBank, Target, ArrowUpRight, ArrowDownRight, 
   Trash2, X, LogOut, ShoppingBag, Pencil
@@ -45,7 +45,7 @@ type Expense = {
   amount: number;
   date: string;
   category: string;
-  is_recurring?: boolean; // Nueva propiedad
+  is_recurring?: boolean; 
 };
 
 const COLORS = ["#0f172a", "#2563eb", "#059669", "#7c3aed", "#db2777", "#ea580c"];
@@ -55,12 +55,12 @@ export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   
-  // ESTADO DE FECHA (Nuevo)
+  // ESTADO DE FECHA
   const [currentDate, setCurrentDate] = useState(new Date());
 
   // Datos
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]); // Aquí estarán TODOS los del mes (fijos + variables)
+  const [expenses, setExpenses] = useState<Expense[]>([]); 
   const [income, setIncome] = useState(0); 
   const [savingsGoal, setSavingsGoal] = useState(0);
 
@@ -75,7 +75,7 @@ export default function Dashboard() {
   const [expenseForm, setExpenseForm] = useState({ name: "", amount: "", date: new Date().toISOString().split('T')[0], category: "Ocio" });
   const [incomeForm, setIncomeForm] = useState({ income: "", savings_goal: "" });
 
-  // 1. CARGA INICIAL Y CUANDO CAMBIA LA FECHA
+  // 1. CARGA INICIAL
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -87,7 +87,7 @@ export default function Dashboard() {
       fetchData(user.id, currentDate);
     };
     checkUser();
-  }, [router, currentDate]); // Se ejecuta al cambiar currentDate
+  }, [router, currentDate]);
 
   const fetchData = async (userId: string, date: Date) => {
     setLoading(true);
@@ -100,11 +100,11 @@ export default function Dashboard() {
             setIncomeForm({ income: profile.income?.toString(), savings_goal: profile.savings_goal?.toString() });
         }
 
-        // B. Cargar Suscripciones Activas (Definiciones)
+        // B. Cargar Suscripciones Activas
         const { data: subs } = await supabase.from('subscriptions').select('*').eq('user_id', userId).eq('active', true).order('price', { ascending: false });
         if (subs) setSubscriptions(subs as Subscription[]);
 
-        // C. LOGICA DE MESES: Buscar gastos del mes seleccionado
+        // C. LOGICA DE MESES
         const startStr = getStartOfMonthStr(date);
         const endStr = getEndOfMonthStr(date);
 
@@ -116,16 +116,14 @@ export default function Dashboard() {
             .lte('date', endStr)
             .order('date', { ascending: false });
 
-        // D. GENERACIÓN PEREZOSA: Si no hay gastos y hay suscripciones, generamos
+        // D. GENERACIÓN PEREZOSA
         if ((!monthExpenses || monthExpenses.length === 0) && subs && subs.length > 0) {
-             // Solo generamos si estamos viendo el mes actual o futuro (o si quieres histórico también)
-             console.log("Generando gastos recurrentes para el mes...");
              const newExpenses = subs.map(sub => ({
                 user_id: userId,
                 name: sub.name,
                 amount: sub.price,
                 category: sub.category,
-                date: startStr, // Día 1 del mes seleccionado
+                date: startStr,
                 is_recurring: true
              }));
 
@@ -144,10 +142,21 @@ export default function Dashboard() {
 
   // --- ACTIONS ---
 
+  // ESTA ES LA FUNCIÓN QUE FALTABA
+  const openSubModal = (sub?: Subscription) => {
+      if (sub) {
+          setEditingId(sub.id);
+          setSubForm({ name: sub.name, price: sub.price.toString(), date: sub.start_date, category: sub.category });
+      } else {
+          setEditingId(null);
+          setSubForm({ name: "", price: "", date: "", category: "Entretenimiento" });
+      }
+      setIsSubModalOpen(true);
+  };
+
   const handleSaveSubscription = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    // ... (Tu lógica original de suscripciones se mantiene igual para gestionar la LISTA base)
     const payload = {
         user_id: user.id,
         name: subForm.name,
@@ -162,7 +171,6 @@ export default function Dashboard() {
         } else {
             await supabase.from('subscriptions').insert([payload]);
         }
-        // Recargamos datos
         fetchData(user.id, currentDate);
         setIsSubModalOpen(false);
     } catch (error: any) { alert(error.message); }
@@ -182,9 +190,9 @@ export default function Dashboard() {
               user_id: user.id,
               name: expenseForm.name,
               amount: parseFloat(expenseForm.amount),
-              date: expenseForm.date, // Usamos la fecha del formulario
+              date: expenseForm.date,
               category: expenseForm.category,
-              is_recurring: false // Es un gasto variable
+              is_recurring: false
           }]);
           if (error) throw error;
           fetchData(user.id, currentDate);
@@ -209,13 +217,9 @@ export default function Dashboard() {
       setIsIncomeModalOpen(false);
   };
 
-  // --- CÁLCULOS GLOBALES (Adaptados al mes seleccionado) ---
-  
-  // Ahora 'expenses' contiene TODO lo de este mes (recurrentes generados + variables)
-  // Calculamos el total sumando todo lo que hay en 'expenses'
+  // --- CÁLCULOS GLOBALES ---
   const totalExpenses = expenses.reduce((acc, exp) => acc + exp.amount, 0);
   
-  // Para el gráfico, agrupamos los gastos de ESTE mes por categoría
   const chartData = expenses.reduce((acc: any[], curr) => {
       const existing = acc.find(i => i.name === curr.category);
       if (existing) existing.value += curr.amount;
@@ -256,14 +260,13 @@ export default function Dashboard() {
       {/* CONTENIDO PRINCIPAL */}
       <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-8">
         
-        {/* HEADER & SELECTOR DE MES */}
+        {/* HEADER & SELECTOR */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-slate-900">Panel Financiero</h1>
             <p className="text-slate-500">Resumen de tu salud económica</p>
           </div>
           
-          {/* AQUÍ ESTÁ EL SELECTOR INSERTADO */}
           <div className="flex flex-col items-end gap-2">
               <MonthSelector currentDate={currentDate} onMonthChange={setCurrentDate} />
               
@@ -278,7 +281,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* TARJETAS (KPIs) - AHORA REACCIONAN AL MES */}
+        {/* TARJETAS KPI */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                 <div className="flex justify-between mb-4"><div className="bg-emerald-100 p-2 rounded-lg text-emerald-600"><ArrowUpRight className="h-5 w-5" /></div></div>
@@ -296,7 +299,6 @@ export default function Dashboard() {
                 <h3 className="text-2xl font-black text-slate-900">{savingsGoal}€</h3>
             </div>
             
-            {/* TARJETA NEGRA DE DINERO LIBRE */}
             <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl text-white relative overflow-hidden group">
                 <div className={`absolute top-0 right-0 p-32 rounded-full mix-blend-overlay filter blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2 transition-colors duration-500 ${validPercentage < 20 ? 'bg-red-500' : 'bg-blue-500'}`}></div>
                 <div className="relative z-10">
@@ -320,7 +322,7 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
-            {/* GRÁFICO (Ahora con datos reales del mes) */}
+            {/* GRÁFICO */}
             <div className="md:col-span-1 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center justify-center">
                 <h4 className="font-bold text-slate-800 w-full mb-4">Desglose del Mes</h4>
                 {expenses.length > 0 ? (
@@ -340,7 +342,7 @@ export default function Dashboard() {
                 ) : ( <p className="text-slate-400">Sin gastos este mes</p> )}
             </div>
 
-            {/* LISTA SUSCRIPCIONES (Gestión) */}
+            {/* LISTA SUSCRIPCIONES */}
             <div className="md:col-span-2 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col">
                 <div className="flex justify-between items-center mb-6">
                     <h4 className="font-bold text-slate-800">Tus Suscripciones Activas</h4>
@@ -366,7 +368,7 @@ export default function Dashboard() {
             </div>
         </div>
 
-        {/* TABLA MOVIMIENTOS DEL MES (MEZCLA FIJO Y VARIABLE) */}
+        {/* TABLA MOVIMIENTOS */}
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
             <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-2">
@@ -412,7 +414,6 @@ export default function Dashboard() {
 
       </div>
 
-      {/* TUS MODALES SE MANTIENEN IGUAL (HE MANTENIDO EL CÓDIGO INTACTO ABAJO, SOLO CÓPIALO DE TU ORIGINAL SI LO NECESITAS O PÍDEMELO ENTERO SI SE CORTA) */}
       {/* --- MODAL: SUSCRIPCIONES --- */}
       {isSubModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
