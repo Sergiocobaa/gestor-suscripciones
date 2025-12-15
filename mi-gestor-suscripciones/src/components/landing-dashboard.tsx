@@ -1,19 +1,18 @@
 "use client";
 
-// 1. AÑADIMOS "Lock" A LOS IMPORTS
-import { Wallet, LayoutDashboard, Plus, MoreHorizontal, Lock } from "lucide-react";
+import { Wallet, Plus, MoreHorizontal, Lock, ArrowUpRight, ArrowDownRight, PiggyBank, ShoppingBag, TrendingUp } from "lucide-react";
 
 export function LandingDashboard() {
     return (
-        <div className="relative group w-full max-w-5xl mx-auto">
+        <div className="relative group w-full max-w-6xl mx-auto font-sans">
 
             {/* Efecto de Brillo (Glow) detrás */}
             <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
 
-            {/* Marco del Navegador */}
+            {/* Marco del Navegador Estilo Mac */}
             <div className="relative rounded-xl border border-slate-200 bg-slate-50 shadow-2xl overflow-hidden">
 
-                {/* Barra Superior Mac */}
+                {/* Barra Superior */}
                 <div className="border-b border-slate-200 bg-white/80 backdrop-blur-md p-3 sm:p-4 flex items-center justify-between">
                     <div className="flex space-x-2">
                         <div className="h-3 w-3 rounded-full bg-red-400"></div>
@@ -21,103 +20,151 @@ export function LandingDashboard() {
                         <div className="h-3 w-3 rounded-full bg-green-400"></div>
                     </div>
 
-                    {/* --- AQUÍ ESTÁ EL CAMBIO --- */}
                     <div className="flex-1 max-w-lg mx-auto bg-slate-100 rounded-md py-1 px-3 text-center text-xs font-medium text-slate-500 flex items-center justify-center gap-1.5">
-                        {/* Sustituimos el emoji por el icono vectorial profesional */}
-                        <Lock className="h-3 w-3 text-slate-400" />
-                        recur.app/dashboard
+                        <Lock className="h-3 w-3 text-emerald-500" />
+                        <span className="text-slate-600">recur.es/dashboard</span>
                     </div>
-                    {/* --------------------------- */}
 
                     <div className="w-10"></div>
                 </div>
 
-                {/* EL DASHBOARD FALSO (HTML/CSS) - El resto sigue igual */}
-                <div className="bg-white p-6 sm:p-10 w-full overflow-hidden relative">
-                    {/* Fondo de rejilla sutil */}
-                    <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+                {/* --- EL DASHBOARD FALSO (Replica del Real) --- */}
+                <div className="bg-slate-50/50 p-6 sm:p-8 w-full overflow-hidden relative">
+                    
+                    {/* Header Falso */}
+                    <div className="flex justify-between items-end mb-8">
+                        <div>
+                            <h2 className="text-2xl font-bold text-slate-900">Panel Principal</h2>
+                            <p className="text-slate-500 text-sm">Resumen financiero de Octubre</p>
+                        </div>
+                        <div className="hidden sm:flex gap-2">
+                             <div className="bg-white border border-slate-200 text-slate-700 px-3 py-2 rounded-md text-xs font-medium shadow-sm">
+                                Configurar Ingresos
+                             </div>
+                             <div className="bg-slate-900 text-white px-3 py-2 rounded-md text-xs font-medium shadow-lg shadow-slate-900/20 flex items-center gap-2">
+                                <Plus className="h-3 w-3" /> Nuevo Gasto
+                             </div>
+                        </div>
+                    </div>
 
-                    <div className="relative z-10 max-w-4xl mx-auto space-y-8">
-
-                        {/* Header Text */}
-                        <div className="space-y-2">
-                            <h2 className="text-3xl font-extrabold text-slate-900">Tus Gastos</h2>
-                            <p className="text-slate-500">Gestiona y controla tus pagos recurrentes.</p>
+                    {/* GRID DE KPIs (Igual que el real) */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        
+                        {/* Ingresos */}
+                        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                            <div className="flex justify-between mb-3"><div className="bg-emerald-100 p-2 rounded-lg text-emerald-600"><ArrowUpRight className="h-4 w-4" /></div></div>
+                            <p className="text-slate-500 text-xs font-medium uppercase tracking-wider">Ingresos</p>
+                            <h3 className="text-xl font-black text-slate-900">2.450€</h3>
                         </div>
 
-                        {/* GRID SUPERIOR: Tarjeta Negra + Gráfico */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Gastos */}
+                        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                            <div className="flex justify-between mb-3"><div className="bg-red-100 p-2 rounded-lg text-red-600"><ArrowDownRight className="h-4 w-4" /></div></div>
+                            <p className="text-slate-500 text-xs font-medium uppercase tracking-wider">Gastos Totales</p>
+                            <h3 className="text-xl font-black text-slate-900">850€</h3>
+                        </div>
 
-                            {/* Tarjeta Negra (Total) */}
-                            <div className="md:col-span-2 bg-slate-900 rounded-2xl p-6 text-white shadow-xl shadow-slate-900/20 relative overflow-hidden">
-                                <div className="relative z-10 flex justify-between items-start">
-                                    <div>
-                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Mensual</span>
-                                        <div className="text-5xl font-black tracking-tighter mt-2">48.98€</div>
-                                    </div>
-                                    <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm">
-                                        <Wallet className="h-6 w-6 text-emerald-400" />
-                                    </div>
+                        {/* Ahorro */}
+                         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hidden md:block">
+                            <div className="flex justify-between mb-3"><div className="bg-blue-100 p-2 rounded-lg text-blue-600"><PiggyBank className="h-4 w-4" /></div></div>
+                            <p className="text-slate-500 text-xs font-medium uppercase tracking-wider">Meta Ahorro</p>
+                            <h3 className="text-xl font-black text-slate-900">400€</h3>
+                        </div>
+
+                        {/* LA TARJETA NEGRA (Estrella del show) */}
+                        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl text-white relative overflow-hidden group">
+                            {/* Luz de fondo dinámica */}
+                            <div className="absolute top-0 right-0 p-24 bg-emerald-500 rounded-full mix-blend-overlay filter blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2"></div>
+                            
+                            <div className="relative z-10">
+                                <div className="flex justify-between mb-3">
+                                    <div className="bg-white/10 p-2 rounded-lg"><Wallet className="h-4 w-4" /></div>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">49% libre</span>
                                 </div>
-                                <div className="mt-6 flex gap-2">
-                                    <div className="text-xs font-medium text-emerald-300 bg-emerald-500/20 px-3 py-1 rounded-full">
-                                        3 suscripciones activas
+                                <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Libre para gastar</p>
+                                <h3 className="text-2xl font-black tracking-tight mt-1">1.200€</h3>
+                                
+                                {/* Barra de progreso visual */}
+                                <div className="mt-4 space-y-1">
+                                    <div className="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                                        <div className="h-full rounded-full bg-emerald-400 w-[49%]"></div>
                                     </div>
+                                    <p className="text-[10px] text-slate-400 text-right">Vas genial 🚀</p>
                                 </div>
                             </div>
+                        </div>
+                    </div>
 
-                            {/* Tarjeta Gráfico (FALSO PERO PERFECTO) */}
-                            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center relative">
-                                <h3 className="text-sm font-bold text-slate-800 absolute top-4 left-4">Gasto por Categoría</h3>
-
-                                {/* EL DONUT CSS: Conic Gradient */}
-                                <div className="relative w-32 h-32 mt-4">
-                                    <div className="w-full h-full rounded-full" style={{ background: 'conic-gradient(#0f172a 0% 35%, #2563eb 35% 60%, #059669 60% 100%)' }}></div>
-                                    <div className="absolute inset-0 m-auto w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm">
-                                        <span className="text-xs font-bold text-slate-500">100%</span>
+                    {/* SECCIÓN INFERIOR */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        
+                        {/* Lista Suscripciones */}
+                        <div className="md:col-span-2 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                            <div className="flex justify-between items-center mb-6">
+                                <h4 className="font-bold text-slate-800">Suscripciones Activas</h4>
+                                <MoreHorizontal className="text-slate-300 h-5 w-5" />
+                            </div>
+                            <div className="space-y-3">
+                                {/* Item 1 */}
+                                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-transparent hover:border-slate-200 transition-colors">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-9 w-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-900 font-bold text-xs">N</div>
+                                        <div>
+                                            <p className="font-bold text-slate-900 text-sm">Netflix Premium</p>
+                                            <p className="text-xs text-slate-500">Entretenimiento • Renueva mañana</p>
+                                        </div>
                                     </div>
+                                    <p className="font-bold text-slate-900 text-sm">-17.99€</p>
                                 </div>
-
-                                <div className="flex gap-3 mt-4 text-[10px] text-slate-500">
-                                    <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-900"></span> Entr.</div>
-                                    <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-600"></span> Soft.</div>
-                                    <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-600"></span> Hogar</div>
+                                {/* Item 2 */}
+                                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-transparent hover:border-slate-200 transition-colors">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-9 w-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-900 font-bold text-xs">S</div>
+                                        <div>
+                                            <p className="font-bold text-slate-900 text-sm">Spotify Duo</p>
+                                            <p className="text-xs text-slate-500">Música • Renueva en 5 días</p>
+                                        </div>
+                                    </div>
+                                    <p className="font-bold text-slate-900 text-sm">-14.99€</p>
+                                </div>
+                                 {/* Item 3 */}
+                                 <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-transparent hover:border-slate-200 transition-colors">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-9 w-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-900 font-bold text-xs">C</div>
+                                        <div>
+                                            <p className="font-bold text-slate-900 text-sm">ChatGPT Plus</p>
+                                            <p className="text-xs text-slate-500">IA • Renueva en 12 días</p>
+                                        </div>
+                                    </div>
+                                    <p className="font-bold text-slate-900 text-sm">-22.00€</p>
                                 </div>
                             </div>
                         </div>
 
-                        {/* GRID INFERIOR: Tarjetas de Suscripción Falsas */}
-                        <div className="flex items-center justify-between pt-4">
-                            <h3 className="text-lg font-bold text-slate-800">Mis Suscripciones</h3>
-                            <div className="bg-slate-900 text-white text-xs px-3 py-2 rounded-md flex items-center gap-1">
-                                <Plus className="h-3 w-3" /> Nueva
+                        {/* Gastos Variables (Nuevo Feature) */}
+                        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col">
+                            <div className="flex items-center gap-2 mb-6">
+                                <div className="bg-orange-100 p-1.5 rounded-md text-orange-600"><ShoppingBag className="h-4 w-4" /></div>
+                                <h4 className="font-bold text-slate-800 text-sm">Gastos Extra</h4>
                             </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 opacity-80 pointer-events-none select-none">
-                            <div className="border border-slate-200 rounded-xl p-5 bg-white shadow-sm">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="font-bold text-slate-900">Netflix</div>
-                                    <MoreHorizontal className="h-4 w-4 text-slate-300" />
+                            
+                            <div className="space-y-4 flex-1">
+                                <div className="flex justify-between items-center text-sm border-b border-slate-50 pb-2">
+                                    <span className="text-slate-600">Cena VIPS</span>
+                                    <span className="font-bold text-slate-900">-45.50€</span>
                                 </div>
-                                <div className="text-2xl font-bold text-slate-900">17.99<span className="text-sm text-slate-500 font-normal">€/mes</span></div>
-                                <div className="text-xs text-slate-400 mt-2 bg-slate-50 inline-block px-2 py-1 rounded">Renueva el 15/12</div>
+                                <div className="flex justify-between items-center text-sm border-b border-slate-50 pb-2">
+                                    <span className="text-slate-600">Gasolina</span>
+                                    <span className="font-bold text-slate-900">-60.00€</span>
+                                </div>
+                                <div className="flex justify-between items-center text-sm border-b border-slate-50 pb-2">
+                                    <span className="text-slate-600">Zara</span>
+                                    <span className="font-bold text-slate-900">-29.99€</span>
+                                </div>
                             </div>
-                            <div className="border border-slate-200 rounded-xl p-5 bg-white shadow-sm">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="font-bold text-slate-900">Spotify</div>
-                                    <MoreHorizontal className="h-4 w-4 text-slate-300" />
-                                </div>
-                                <div className="text-2xl font-bold text-slate-900">12.99<span className="text-sm text-slate-500 font-normal">€/mes</span></div>
-                                <div className="text-xs text-slate-400 mt-2 bg-slate-50 inline-block px-2 py-1 rounded">Renueva el 20/12</div>
-                            </div>
-                            <div className="border border-slate-200 rounded-xl p-5 bg-white shadow-sm">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="font-bold text-slate-900">ChatGPT</div>
-                                    <MoreHorizontal className="h-4 w-4 text-slate-300" />
-                                </div>
-                                <div className="text-2xl font-bold text-slate-900">23.00<span className="text-sm text-slate-500 font-normal">€/mes</span></div>
-                                <div className="text-xs text-slate-400 mt-2 bg-slate-50 inline-block px-2 py-1 rounded">Renueva el 01/01</div>
+                            
+                            <div className="mt-4 pt-4 border-t border-slate-100">
+                                <div className="text-xs text-slate-400 text-center">Total Variables: 135.49€</div>
                             </div>
                         </div>
 
