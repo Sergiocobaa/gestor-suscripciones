@@ -1,34 +1,59 @@
-"use client";
-
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, CheckCircle2, LayoutDashboard, BarChart3, Bell, Lock, Wallet } from "lucide-react"
-import { supabase } from "@/lib/supabase"
-import { useEffect, useState } from "react"
-import { User } from "@supabase/supabase-js"
+import { ArrowRight, CheckCircle2, LayoutDashboard, BarChart3, Lock, Wallet } from "lucide-react"
 import { LandingDashboard } from "@/components/landing-dashboard";
+import { LandingNavbarActions } from "@/components/landing-navbar-actions"; // Importamos el componente nuevo
+import { Metadata } from "next";
+
+// 1. METADATOS SEO (Lo que lee Google)
+export const metadata: Metadata = {
+  title: "Recur | Control de Suscripciones y Gastos Fijos",
+  description: "La mejor app para gestionar suscripciones (Netflix, Spotify) y gastos recurrentes. Calcula tu dinero libre real y ahorra cada mes.",
+  keywords: ["gestor de suscripciones", "control de gastos", "finanzas personales", "ahorro app", "rastreador de gastos", "software finanzas"],
+  openGraph: {
+    title: "Recur - Deja de perder dinero en suscripciones",
+    description: "Controla tus gastos fijos y descubre cuánto dinero libre tienes realmente.",
+    url: "https://recur.es", // Pon tu dominio real
+    siteName: "Recur",
+    images: [
+      {
+        url: "/og-image.png", // Asegúrate de tener esta imagen en /public
+        width: 1200,
+        height: 630,
+      },
+    ],
+    locale: "es_ES",
+    type: "website",
+  },
+};
 
 export default function LandingPage() {
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
-
-    // Comprobamos si hay sesión al cargar
-    useEffect(() => {
-        async function checkUser() {
-            try {
-                const { data: { user } } = await supabase.auth.getUser();
-                setUser(user);
-            } catch (error) {
-                console.error("Error verificando sesión:", error);
-            } finally {
-                setLoading(false);
-            }
-        }
-        checkUser();
-    }, []);
+    
+    // 2. DATOS ESTRUCTURADOS (JSON-LD)
+    // Esto ayuda a Google a mostrar "Rich Snippets"
+    const jsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareApplication',
+        name: 'Recur',
+        applicationCategory: 'FinanceApplication',
+        operatingSystem: 'Web',
+        offers: {
+            '@type': 'Offer',
+            price: '0',
+            priceCurrency: 'EUR',
+        },
+        description: 'Gestor de suscripciones y control de gastos personales.',
+        featureList: 'Control de suscripciones, Cálculo de dinero libre, Privacidad total',
+    };
 
     return (
         <div className="min-h-screen bg-white font-sans relative overflow-hidden selection:bg-blue-100">
+            
+            {/* Inyección del JSON-LD */}
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
 
             {/* Fondos y Efectos */}
             <div className="fixed inset-0 -z-10 h-full w-full bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
@@ -37,38 +62,13 @@ export default function LandingPage() {
             {/* --- NAVBAR --- */}
             <nav className="sticky top-0 z-50 w-full border-b border-slate-200/60 bg-white/80 backdrop-blur-md">
                 <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 max-w-7xl">
-                    <Link href="/" className="flex items-center gap-2 font-bold text-xl tracking-tight text-slate-900 hover:opacity-80 transition-opacity">
+                    <Link href="/" className="flex items-center gap-2 font-bold text-xl tracking-tight text-slate-900 hover:opacity-80 transition-opacity" aria-label="Recur Inicio">
                         <div className="h-8 w-8 rounded-lg bg-slate-900 flex items-center justify-center text-white">R.</div>
                         <span className="hidden sm:inline-block">Recur</span>
                     </Link>
 
-                    <div className="flex gap-2 sm:gap-4">
-                        {!loading && (
-                            user ? (
-                                <div className="flex items-center gap-2 sm:gap-4">
-                                    <Link href="/dashboard">
-                                        <Button className="bg-slate-900 text-white hover:bg-slate-800 rounded-full px-4 sm:px-6 shadow-lg shadow-slate-900/20 transition-all hover:scale-105 text-xs sm:text-sm h-9 sm:h-10">
-                                            <LayoutDashboard className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                                            <span className="sm:inline">Ir al Dashboard</span>
-                                        </Button>
-                                    </Link>
-                                </div>
-                            ) : (
-                                <>
-                                    <Link href="/login">
-                                        <Button variant="ghost" className="text-slate-600 hover:text-slate-900 font-medium hidden sm:inline-flex">
-                                            Iniciar Sesión
-                                        </Button>
-                                    </Link>
-                                    <Link href="/login">
-                                        <Button className="bg-slate-900 text-white hover:bg-slate-800 rounded-full px-4 sm:px-6 shadow-lg shadow-slate-900/20 transition-all hover:scale-105 text-xs sm:text-sm h-9 sm:h-10">
-                                            Empezar Gratis
-                                        </Button>
-                                    </Link>
-                                </>
-                            )
-                        )}
-                    </div>
+                    {/* Aquí cargamos el componente cliente aislado */}
+                    <LandingNavbarActions />
                 </div>
             </nav>
 
@@ -82,6 +82,7 @@ export default function LandingPage() {
                         Nuevo: Control total de Gastos Variables
                     </div>
 
+                    {/* H1 Optimizado con palabras clave */}
                     <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 leading-[1.1] sm:leading-[1.1]">
                         Controla tus suscripciones y <br className="hidden sm:block" />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 block sm:inline mt-2 sm:mt-0">
@@ -90,32 +91,24 @@ export default function LandingPage() {
                     </h1>
 
                     <p className="text-base sm:text-lg md:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed px-2">
-                        Recur no es solo para Netflix. Calcula cuánto te queda realmente para gastar después de facturas, ahorros y caprichos.
+                        Recur es el gestor financiero que te dice la verdad: cuánto te queda para gastar después de facturas, ahorros y caprichos.
                     </p>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4 w-full sm:w-auto">
-                        {!loading && user ? (
-                            <Link href="/dashboard" className="w-full sm:w-auto">
-                                <Button size="lg" className="w-full sm:w-auto h-12 sm:h-14 px-8 text-base sm:text-lg bg-emerald-600 hover:bg-emerald-700 text-white rounded-full shadow-xl shadow-emerald-900/10 hover:shadow-emerald-900/20 transition-all hover:-translate-y-1">
-                                    <LayoutDashboard className="mr-2 h-5 w-5" />
-                                    Entrar a mi Panel
-                                </Button>
-                            </Link>
-                        ) : (
-                            <Link href="/login" className="w-full sm:w-auto">
-                                <Button size="lg" className="w-full sm:w-auto h-12 sm:h-14 px-8 text-base sm:text-lg bg-slate-900 hover:bg-slate-800 rounded-full shadow-xl shadow-slate-900/20 hover:shadow-slate-900/30 transition-all hover:-translate-y-1">
-                                    Empezar Gratis
-                                    <ArrowRight className="ml-2 h-5 w-5" />
-                                </Button>
-                            </Link>
-                        )}
+                        <Link href="/login" className="w-full sm:w-auto">
+                            <Button size="lg" className="w-full sm:w-auto h-12 sm:h-14 px-8 text-base sm:text-lg bg-slate-900 hover:bg-slate-800 rounded-full shadow-xl shadow-slate-900/20 hover:shadow-slate-900/30 transition-all hover:-translate-y-1">
+                                Empezar Gratis
+                                <ArrowRight className="ml-2 h-5 w-5" />
+                            </Button>
+                        </Link>
+                        
                         <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-500 mt-2 sm:mt-0">
                             <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Sin tarjeta requerida
                         </div>
                     </div>
                 </section>
 
-                {/* --- MOCKUP VISUAL (EL COMPONENTE NUEVO) --- */}
+                {/* --- MOCKUP VISUAL --- */}
                 <section className="w-full max-w-7xl px-2 sm:px-6 mb-24 md:mb-32">
                     <div className="relative mx-auto transform-gpu transition-all duration-500 hover:scale-[1.01]">
                         <LandingDashboard />
@@ -126,59 +119,56 @@ export default function LandingPage() {
                 <section className="w-full py-20 border-y border-slate-100 bg-slate-50/50">
                     <div className="container mx-auto px-6 text-center">
                         <p className="text-sm font-bold text-slate-400 mb-12 uppercase tracking-widest">
-                            Compatible con cualquier gasto recurrente
+                            Gestiona cualquier gasto recurrente
                         </p>
                         
+                        {/* Importante: Añadir atributos width/height explícitos para SEO/Performance (CLS) */}
                         <div className="flex flex-wrap items-center justify-center gap-12 md:gap-24 grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-500">
-                            {/* Netflix */}
-                            <img src="https://images.icon-icons.com/2699/PNG/512/netflix_logo_icon_170919.png" alt="Netflix" className="h-12 md:h-16 w-auto object-contain hover:scale-110 transition-transform duration-300" />
-                             {/* Amazon Prime */}
-                            <img src="https://img.icons8.com/color/600/amazon-prime.png" alt="Amazon Prime" className="h-12 md:h-16 w-auto object-contain hover:scale-110 transition-transform duration-300" />
-                            {/* ChatGPT / OpenAI */}
-                            <img src="https://cdn.iconscout.com/icon/free/png-256/free-chatgpt-icon-svg-download-png-7576880.png?f=webp" alt="ChatGPT" className="h-12 md:h-16 w-auto object-contain hover:scale-110 transition-transform duration-300" />
-                            {/* Adobe */}
-                            <img src="https://cdn-icons-png.flaticon.com/512/732/732171.png" alt="Adobe" className="h-12 md:h-16 w-auto object-contain hover:scale-110 transition-transform duration-300" />
+                             <img src="https://images.icon-icons.com/2699/PNG/512/netflix_logo_icon_170919.png" alt="Gestión de suscripción Netflix" width="64" height="64" className="h-12 md:h-16 w-auto object-contain hover:scale-110 transition-transform duration-300" loading="lazy" />
+                            <img src="https://img.icons8.com/color/600/amazon-prime.png" alt="Control de gastos Amazon Prime" width="64" height="64" className="h-12 md:h-16 w-auto object-contain hover:scale-110 transition-transform duration-300" loading="lazy" />
+                            <img src="https://cdn.iconscout.com/icon/free/png-256/free-chatgpt-icon-svg-download-png-7576880.png?f=webp" alt="Suscripción ChatGPT" width="64" height="64" className="h-12 md:h-16 w-auto object-contain hover:scale-110 transition-transform duration-300" loading="lazy" />
+                            <img src="https://cdn-icons-png.flaticon.com/512/732/732171.png" alt="Gastos de Adobe Creative Cloud" width="64" height="64" className="h-12 md:h-16 w-auto object-contain hover:scale-110 transition-transform duration-300" loading="lazy" />
                         </div>
                     </div>
                 </section>
 
-                {/* --- FEATURES GRID --- */}
+                {/* --- FEATURES GRID (H2 para SEO) --- */}
                 <section className="w-full max-w-6xl px-4 sm:px-6 py-24">
                     <div className="mb-16 text-center max-w-3xl mx-auto">
                         <h2 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
                             No es otro Excel aburrido.
                         </h2>
                         <p className="mt-4 text-lg text-slate-500">
-                           Es una herramienta visual que te dice la verdad: si puedes permitirte ese capricho o si deberías frenar.
+                           Recur es una herramienta visual de finanzas personales que te ayuda a tomar mejores decisiones.
                         </p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* Card 1 */}
+                        {/* Feature 1 */}
                         <div className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 transition-all hover:border-blue-200 hover:shadow-lg">
                             <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 group-hover:scale-110 transition-transform">
                                 <Wallet className="h-6 w-6" />
                             </div>
                             <h3 className="mb-2 text-xl font-bold text-slate-900">Dinero Libre Real</h3>
-                            <p className="text-slate-500">Calculamos tus ingresos menos tus gastos fijos y objetivos de ahorro. Lo que sobra es para disfrutar sin culpa.</p>
+                            <p className="text-slate-500">Calculamos tus ingresos menos tus gastos fijos y objetivos de ahorro.</p>
                         </div>
 
-                        {/* Card 2 */}
+                        {/* Feature 2 */}
                         <div className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 transition-all hover:border-purple-200 hover:shadow-lg">
                             <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-purple-50 text-purple-600 group-hover:scale-110 transition-transform">
                                 <BarChart3 className="h-6 w-6" />
                             </div>
                             <h3 className="mb-2 text-xl font-bold text-slate-900">Gastos Variables</h3>
-                            <p className="text-slate-500">¿Cena fuera? ¿Gasolina? ¿Ropa? Añádelos en un segundo y ve cómo afecta a tu barra de "Libre para gastar".</p>
+                            <p className="text-slate-500">¿Cena fuera? ¿Ropa? Añádelos y ve cómo afecta a tu presupuesto mensual.</p>
                         </div>
 
-                        {/* Card 3 */}
+                        {/* Feature 3 */}
                         <div className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 transition-all hover:border-emerald-200 hover:shadow-lg">
                             <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 group-hover:scale-110 transition-transform">
                                 <Lock className="h-6 w-6" />
                             </div>
                             <h3 className="mb-2 text-xl font-bold text-slate-900">100% Privado</h3>
-                            <p className="text-slate-500">Sin conexión bancaria intrusiva. Tú añades manualmente lo que quieres trackear. Tus datos son tuyos.</p>
+                            <p className="text-slate-500">Sin conexión bancaria intrusiva. Tú añades manualmente lo que quieres trackear.</p>
                         </div>
                     </div>
                 </section>
@@ -200,7 +190,7 @@ export default function LandingPage() {
                     </div>
                 </section>
 
-                {/* --- FOOTER PROFESIONAL --- */}
+                {/* --- FOOTER --- */}
                 <footer className="w-full bg-slate-950 text-slate-400 py-16 border-t border-slate-800">
                     <div className="container mx-auto px-6 max-w-6xl">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-12">
